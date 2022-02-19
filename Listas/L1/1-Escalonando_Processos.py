@@ -3,6 +3,7 @@ class Processo:
         self.id = id_init
         self.tempo = tempo_init
         self.proximo = None
+        self.anterior = None
 
     def get_id(self):
         return self.id
@@ -13,64 +14,78 @@ class Processo:
     def get_prox(self):
         return self.proximo
 
+    def get_ant(self):
+        return self.anterior
+
     def muda_tempo(self, x):
         self.tempo = x
 
     def muda_prox(self, processo):
         self.proximo = processo
 
+    def muda_ant(self, processo):
+        self.anterior = processo
 
-class Processador():
+    def delete(self):
+        self.anterior = None
+        self.proximo = None
+
+
+class Processador:
     def __init__(self):
         self.first = None
         self.last = None
 
-    def insert(self, processo):
-        if self.first is not None:
-            self.first, self.last = processo
+    def insert(self, id_proc, tempo):
+        processo = Processo(id_proc, tempo)
+        if self.first is None:
+            self.first = processo
         else:
             self.last.muda_prox(processo)
-            processo.muda_prox(None)
-            self.last = processo
+            processo.muda_ant(self.last)
+        self.last = processo
 
     def delete(self):
         proc = self.first
-        if proc.get_prox() is not None:
-            self.first = proc.get_prox()
-            proc.muda_prox(None)
+        nexts = proc.get_prox()
+        if nexts is None:
+            proc.delete()
+            self.first = None
+            self.last = None
+            del proc
         else:
+            nexts.muda_ant(None)
+            proc.delete()
+            self.first = nexts
+            del proc
 
+    def exec(self, tempo):
+        proc = self.first
+        if proc is None:
+            return None
+        proc_tempo = proc.get_tempo()
+        proc_id = proc.get_id()
+        if proc_tempo > tempo:
+            print('O programa {0} executou por {1} segundos.'.format(proc_id, tempo))
+            proc_tempo -= tempo
+            self.delete()
+            self.insert(proc_id, proc_tempo)
+            tempo = 0
+        else:
+            print('O programa {0} executou por {1} segundos.'.format(proc_id, proc_tempo))
+            print('O programa {0} terminou.'.format(proc_id))
+            tempo -= proc_tempo
+            self.delete()
+        if tempo > 0:
+            self.exec(tempo)
 
-
-def exe(tempo):
-    processo = l_first()
-    processo_tempo = processo.get_tempo()
-    processo_id = processo.get_id()
-    if processo.get_tempo() > tempo:
-        print('O programa {0} executou por {1} segundos.'.format(processo_id, tempo))
-        processo_tempo -= tempo
-        processo.muda_tempo(processo_tempo)
-        l_insert(processo)
-        tempo = 0
-    else:
-        print('O programa {0} executou por {1} segundos.'.format(processo_id, processo_tempo))
-        print('O programa {0} terminou.'.format(processo_id))
-        tempo -= processo.get_tempo()
-        l_del()
-    if tempo > 0:
-        exe(tempo)
-
-
-def em_linha():
-    procs = 1
-    proc = l_first()
-    if proc is not None:
-        while proc.get_prox() is not None:
-            procs += 1
+    def retorna_processos(self):
+        proc = self.first
+        prox = 0
+        while proc is not None:
+            prox += 1
             proc = proc.get_prox()
-    else:
-        procs = 0
-    return procs
+        return prox
 
 
 def trata_entrada(entrada):
@@ -92,22 +107,18 @@ def main(x, count=0):
     if entrada[0] == 'ADD':
         id_processo = entrada[1]
         tempo_processo = int(int(entrada[2]))
-        processo = Processo(id_processo, tempo_processo)
-        l_insert(processo)
-        print('O programa {0} foi agendado com sucesso!'.format(processo.get_id(),))
+        processador.insert(id_processo, tempo_processo)
+        print('O programa {0} foi agendado com sucesso!'.format(id_processo))
     else:
         tempo = int(entrada[1])
-        exe(tempo)
-        proxs = em_linha()
+        processador.exec(tempo)
+        proxs = processador.retorna_processos()
         print('A linha possui {0} programas.'.format(proxs))
     if count != x:
         main(x, count)
 
 
-processos = []
 if __name__ == '__main__':
-    sentinel = Processo(None, None)
-    sentinel.muda_prox(None)
-    processos.append(sentinel)
+    processador = Processador()
     numEntradas = input()
     main(int(numEntradas))

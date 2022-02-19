@@ -30,11 +30,12 @@ class Pilha:
             print(empty)
         else:
             prato = self.topo
-            self.topo = self.topo.get_prox()
+            self.topo = prato.get_prox()
             prato.muda_prox(None)
+            prato_int = prato.get_num()
             del prato
             if self.topo is not None:
-                print(self.topo.get_num())
+                print(prato_int)
             else:
                 print(empty)
 
